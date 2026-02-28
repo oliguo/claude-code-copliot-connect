@@ -1,0 +1,14 @@
+# Generated at install time — contains GitHub OAuth token in plaintext
+*.plist
+
+# Token files — never commit secrets
+token
+*.token
+.token
+
+# macOS noise
+.DS_Store
+
+# Logs
+*.log
+logs/
