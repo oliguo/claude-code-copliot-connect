@@ -48,17 +48,17 @@ done
 # ── Helpers ──────────────────────────────────────────────────────────────────
 log()  { echo "[install] $*"; }
 err()  { echo "[install] ERROR: $*" >&2; }
-ok()   { echo "[install]  $*"; }
-warn() { echo "[install]  $*"; }
-plan() { echo "[dry-run]     $*"; }
+ok()   { echo "[install] ✓ $*"; }
+warn() { echo "[install] ⚠ $*" >&2; }
+plan() { echo "[dry-run]   $*"; }
 
 # ── Uninstall ────────────────────────────────────────────────────────────────
 if $UNINSTALL; then
   log "Uninstalling ${LABEL} LaunchAgent..."
   launchctl unload "$PLIST" 2>/dev/null && log "LaunchAgent unloaded." || log "LaunchAgent was not loaded."
-  rm -f "$PLIST"   && log "Removed $PLIST"
-  rm -f "$WRAPPER" && log "Removed $WRAPPER"
-  rm -rf "$(dirname "$TOKEN_FILE")" && log "Removed $(dirname "$TOKEN_FILE")"
+  [[ -f "$PLIST" ]]   && { rm -f "$PLIST";   log "Removed $PLIST"; }   || log "Not found: $PLIST (skipped)"
+  [[ -f "$WRAPPER" ]] && { rm -f "$WRAPPER"; log "Removed $WRAPPER"; } || log "Not found: $WRAPPER (skipped)"
+  [[ -d "$(dirname "$TOKEN_FILE")" ]] && { rm -rf "$(dirname "$TOKEN_FILE")"; log "Removed $(dirname "$TOKEN_FILE")"; } || log "Not found: $(dirname "$TOKEN_FILE") (skipped)"
   log "Uninstall complete. Logs remain at $LOG_DIR — remove manually if desired."
   exit 0
 fi
