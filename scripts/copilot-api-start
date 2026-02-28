@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# copilot-api-start — launchd wrapper for copilot-api
+#
+# Starts copilot-api in the FOREGROUND so launchd tracks its PID directly.
+# A detached background subshell polls for health and sends a macOS
+# notification only if the service fails to start.
+#
+# Environment variables (injected by launchd via EnvironmentVariables):
+#   GITHUB_PERSONAL_ACCESS_TOKEN  GitHub OAuth token from: copilot-api auth
+#   COPILOT_API_PORT              (optional) override port, default 4141
+#   COPILOT_BIN                   (optional) override copilot-api binary path
+set -euo pipefail
+
+COPILOT_BIN="${COPILOT_BIN:-/usr/local/bin/copilot-api}"
+PORT="${COPILOT_API_PORT:-4141}"
+HEALTH_URL="http://localhost:${PORT}"
+MAX_WAIT=30
+POLL_INTERVAL=2
+
+notify() {
+  osascript -e "display notification \"$2\" with title \"$1\""
+}
+
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+if [[ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]]; then
+  log "ERROR: GITHUB_PERSONAL_ACCESS_TOKEN is not set"
+  notify "Copilot API" "Failed to start: token not found. Check logs."
+  exit 1
+fi
+
+log "Starting copilot-api on port ${PORT}..."
+
+# Health-check in a detached background subshell.
+# Only notifies on FAILURE — no noise on every successful start.
+(
+  elapsed=0
+  while (( elapsed < MAX_WAIT )); do
+    if curl -sf --max-time 2 "${HEALTH_URL}/v1/models" > /dev/null 2>&1; then
+      log "copilot-api is healthy on port ${PORT}"
+      exit 0
+    fi
+    sleep "$POLL_INTERVAL"
+    elapsed=$(( elapsed + POLL_INTERVAL ))
+  done
+  log "ERROR: copilot-api did not become healthy within ${MAX_WAIT}s"
+  notify "Copilot API" "Failed to start within ${MAX_WAIT}s — check ~/Library/Logs/copilot-api/"
+) &
+
+# Run copilot-api in the FOREGROUND — launchd tracks this PID.
+# When copilot-api exits (crash/stop), launchd restarts it per KeepAlive.
+exec "$COPILOT_BIN" start \
+  --port "$PORT" \
+  --github-token "$GITHUB_PERSONAL_ACCESS_TOKEN"
