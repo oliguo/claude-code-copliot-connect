@@ -134,8 +134,9 @@ if [[ -f "$TOKEN_FILE" ]]; then
   else
     warn "Token file exists but has unsafe permissions: $TOKEN_PERMS (should be 600)"
   fi
+  $FORCE && $DRY_RUN && plan "Would prompt for token (--force: overwrites existing token)"
 elif $FORCE; then
-  $DRY_RUN && plan "Would prompt for token (--force: overwrites existing)"
+  $DRY_RUN && plan "Would prompt for token (--force: no existing token, will create)"
 else
   warn "No token file — will prompt during install"
   $DRY_RUN && plan "Would run: read -r -s GITHUB_TOKEN"
