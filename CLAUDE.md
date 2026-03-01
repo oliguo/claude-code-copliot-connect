@@ -157,6 +157,24 @@ chmod 600 ~/.config/copilot-api/token
 | Brew tap install | `brew tap oliguo/copilot-api-connect . && brew install copilot-api-connect` |
 | Verify API | `curl -s http://localhost:4141/v1/models \| python3 -m json.tool \| head -20` |
 
+## Git Log
+
+```
+abdd4b3 docs: add full test results and ANSI token corruption troubleshooting
+d6734bc docs: update CLAUDE.md with token paste bug and sed findings
+f4f0a31 fix: sanitise token input to strip ANSI escape sequences on paste
+ef9f090 fix: show --force token prompt in dry-run output
+e2908b3 fix: --help sed pattern for macOS BRE compatibility
+49d19cb feat: support --uninstall --dry-run combined flag
+e8f5b5f docs: add README with full setup guide
+eaaf12c docs: add CLAUDE.md session memory file
+997af57 feat: add Homebrew formula for local tap install
+427dd6f fix: distinct ok/warn sigils, accurate uninstall log messages
+4d346ac feat: add install.sh with --dry-run, --uninstall, --force flags
+6f0f161 feat: add launchd wrapper script
+7f7aae0 chore: scaffold repo with .gitignore and MIT license
+```
+
 ## Repository
 
 - GitHub: https://github.com/oliguo/claude-code-copliot-connect
