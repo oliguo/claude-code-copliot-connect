@@ -38,7 +38,7 @@ for arg in "$@"; do
     --uninstall) UNINSTALL=true ;;
     --force)     FORCE=true ;;
     --help|-h)
-      sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
+      sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^#[[:space:]]*//'
       exit 0
       ;;
     *) echo "Unknown option: $arg" >&2; exit 1 ;;
