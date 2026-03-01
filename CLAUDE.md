@@ -93,6 +93,7 @@ copilot-api auth          # Follow device flow, enter code at github.com/login/d
 | `--dry-run` | Preflight checks + print planned actions — no writes, exits 0 on pass |
 | `--force` | Overwrite token even if token file already exists |
 | `--uninstall` | Unload LaunchAgent, remove plist/wrapper/token dir |
+| `--uninstall --dry-run` | Preview what uninstall would remove — no writes |
 | `--help` | Print usage |
 
 ## How to Continue Development
@@ -114,6 +115,7 @@ copilot-api auth          # Follow device flow, enter code at github.com/login/d
 | Re-authenticate | `copilot-api auth && ./install.sh --force` |
 | Dry run | `./install.sh --dry-run` |
 | Uninstall | `./install.sh --uninstall` |
+| Uninstall dry run | `./install.sh --uninstall --dry-run` |
 | Brew tap install | `brew tap oliguo/copilot-api-connect . && brew install copilot-api-connect` |
 | Verify API | `curl -s http://localhost:4141/v1/models \| python3 -m json.tool \| head -20` |
 

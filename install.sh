@@ -54,6 +54,26 @@ plan() { echo "[dry-run]   $*"; }
 
 # ── Uninstall ────────────────────────────────────────────────────────────────
 if $UNINSTALL; then
+  if $DRY_RUN; then
+    echo ""
+    echo "=========================================================="
+    echo "  DRY RUN - no changes will be made"
+    echo "=========================================================="
+    echo ""
+    log "Planned uninstall actions:"
+    if launchctl list 2>/dev/null | grep -q "$LABEL"; then
+      plan "launchctl unload $PLIST  (service is currently running)"
+    else
+      plan "launchctl unload $PLIST  (service is not loaded — skip)"
+    fi
+    [[ -f "$PLIST" ]]   && plan "rm -f $PLIST" || plan "Not found: $PLIST (skip)"
+    [[ -f "$WRAPPER" ]] && plan "rm -f $WRAPPER" || plan "Not found: $WRAPPER (skip)"
+    [[ -d "$(dirname "$TOKEN_FILE")" ]] && plan "rm -rf $(dirname "$TOKEN_FILE")" || plan "Not found: $(dirname "$TOKEN_FILE") (skip)"
+    plan "Logs at $LOG_DIR — not removed (manual cleanup if desired)"
+    echo ""
+    echo "DRY RUN COMPLETE - run: ./install.sh --uninstall"
+    exit 0
+  fi
   log "Uninstalling ${LABEL} LaunchAgent..."
   launchctl unload "$PLIST" 2>/dev/null && log "LaunchAgent unloaded." || log "LaunchAgent was not loaded."
   [[ -f "$PLIST" ]]   && { rm -f "$PLIST";   log "Removed $PLIST"; }   || log "Not found: $PLIST (skipped)"

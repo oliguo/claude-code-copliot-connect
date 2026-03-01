@@ -63,11 +63,12 @@ copilot-api-connect-install
 ## Installer Options
 
 ```bash
-./install.sh              # Install (prompts for token if not present)
-./install.sh --dry-run    # Preview all actions + preflight checks, no changes made
-./install.sh --force      # Overwrite token (use after copilot-api auth)
-./install.sh --uninstall  # Remove LaunchAgent and all installed files
-./install.sh --help       # Show usage
+./install.sh                       # Install (prompts for token if not present)
+./install.sh --dry-run             # Preview all actions + preflight checks, no changes made
+./install.sh --force               # Overwrite token (use after copilot-api auth)
+./install.sh --uninstall           # Remove LaunchAgent and all installed files
+./install.sh --uninstall --dry-run # Preview what uninstall would remove, no changes made
+./install.sh --help                # Show usage
 ```
 
 ### Dry Run Example
@@ -88,6 +89,25 @@ $ ./install.sh --dry-run
 ...
 PREFLIGHT PASSED - ready to install.
 Run: ./install.sh
+```
+
+### Uninstall Dry Run Example
+
+```
+$ ./install.sh --uninstall --dry-run
+
+==========================================================
+  DRY RUN - no changes will be made
+==========================================================
+
+[install] Planned uninstall actions:
+[dry-run]   launchctl unload ~/Library/LaunchAgents/com.user.copilot-api.plist  (service is currently running)
+[dry-run]   rm -f ~/Library/LaunchAgents/com.user.copilot-api.plist
+[dry-run]   rm -f ~/.local/bin/copilot-api-start
+[dry-run]   rm -rf ~/.config/copilot-api
+[dry-run]   Logs at ~/Library/Logs/copilot-api — not removed (manual cleanup if desired)
+
+DRY RUN COMPLETE - run: ./install.sh --uninstall
 ```
 
 ## What Gets Installed
