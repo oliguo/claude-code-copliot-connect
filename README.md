@@ -146,6 +146,57 @@ launchctl list | grep copilot-api   # check exit code (column 2)
 tail -20 ~/Library/Logs/copilot-api/stderr.log
 ```
 
+**`invalid authorization header` crash-loop after fresh install**
+Your token was corrupted by an ANSI escape sequence during paste. Diagnose with:
+```bash
+xxd ~/.config/copilot-api/token | head -1
+# Corrupt:  1b5b 313b 3243 6768 755f ...   ← starts with 1b (ESC byte)
+# Clean:    6768 755f ...                   ← starts with "gh"
+```
+Fix by copying the token directly from where `copilot-api auth` saved it:
+```bash
+cp ~/.local/share/copilot-api/github_token ~/.config/copilot-api/token
+chmod 600 ~/.config/copilot-api/token
+./install.sh --force
+```
+> Note: `install.sh` now sanitises the token automatically on paste, so this
+> should only affect installs from before that fix.
+
+## Tested
+
+All flags verified working on macOS (tested 2026-03-01):
+
+| Command | Result |
+|---------|--------|
+| `./install.sh --help` | ✅ Clean usage output |
+| `./install.sh --dry-run` | ✅ Preflight passes, planned actions shown |
+| `./install.sh --dry-run --force` | ✅ Shows token overwrite in plan |
+| `./install.sh --uninstall --dry-run` | ✅ Shows planned removals, no changes |
+| `./install.sh --uninstall` | ✅ Unloads service, removes all files |
+| `./install.sh` (fresh install) | ✅ Full end-to-end: installs, loads, API healthy |
+
+Fresh install log output:
+```
+[install] ✓ copilot-api found at /usr/local/bin/copilot-api
+[install] ✓ osascript found (macOS notifications available)
+[install] ✓ curl found
+[install] ✓ scripts/copilot-api-start found
+[install] ⚠ No token file — will prompt during install
+[install] Token saved (chmod 600).
+[install] Wrapper installed.
+/Users/oli/Library/LaunchAgents/com.user.copilot-api.plist: OK
+[install] Plist written (chmod 600).
+[install] LaunchAgent loaded.
+```
+
+Service health confirmed in logs:
+```
+➜ Listening on: http://localhost:4141/ (all interfaces)
+--> GET /v1/models 200 3ms
+[2026-03-01 17:23:12] copilot-api is healthy on port 4141
+--> POST /v1/messages?beta=true 200 2s
+```
+
 ## Quick Reference
 
 ```bash
