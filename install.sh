@@ -192,7 +192,10 @@ else
   log "Enter your GitHub token from 'copilot-api auth' (input hidden):"
   read -r -s GITHUB_TOKEN
   echo
+  # Strip ANSI escape sequences and non-printable chars (can sneak in on paste)
+  GITHUB_TOKEN=$(printf '%s' "$GITHUB_TOKEN" | sed $'s/\x1b\\[[0-9;]*[A-Za-z]//g' | tr -cd '[:print:]')
   [[ -z "$GITHUB_TOKEN" ]] && { err "Token cannot be empty."; exit 1; }
+  [[ "$GITHUB_TOKEN" =~ ^ghu_ ]] || warn "Token doesn't start with 'ghu_' — expected a token from 'copilot-api auth'"
   printf '%s' "$GITHUB_TOKEN" > "$TOKEN_FILE"
   chmod 600 "$TOKEN_FILE"
   unset GITHUB_TOKEN
