@@ -58,12 +58,23 @@ LICENSE                     ← MIT
 6. **`COPILOT_BIN` env override** — both `install.sh` and `scripts/copilot-api-start`
    respect `${COPILOT_BIN:-/usr/local/bin/copilot-api}` for non-standard npm prefix paths.
 
-## Token Lifecycle
+7. **Token sanitisation on input** — `install.sh` strips ANSI escape sequences and
+   non-printable bytes from the token after `read -s`. Some terminals inject
+   `ESC[...` codes on paste which corrupt the token silently. Order matters:
+   `sed` (strip ESC sequences) THEN `tr -cd '[:print:]'` (strip non-printables).
+   Reversing the order leaves printable remnants of the escape sequence behind.
+
+8. **`--help` uses `[[:space:]]*` not `\?`** — the `sed` pattern to strip leading `#`
+   from the header comment block uses `s/^#[[:space:]]*//'`. The `\?` quantifier is
+   not valid BRE on macOS BSD sed and causes `#` characters to appear in the output.
 
 Tokens are GitHub OAuth device tokens (`ghu_...`) obtained via:
 ```bash
 copilot-api auth
 ```
+`copilot-api auth` writes the token to `~/.local/share/copilot-api/github_token`.
+`install.sh` prompts you to paste it into `~/.config/copilot-api/token`.
+
 They expire periodically. Symptom: `ERROR Failed to get Copilot token` in stderr log.
 
 **Fix:**
@@ -71,6 +82,33 @@ They expire periodically. Symptom: `ERROR Failed to get Copilot token` in stderr
 copilot-api auth          # Follow device flow, enter code at github.com/login/device
 ./install.sh --force      # Updates token file + plist, reloads LaunchAgent
 ```
+
+### Token Paste Bug (ANSI escape sequences)
+
+**Symptom:** Service crash-loops with `invalid authorization header` in stderr log
+immediately after a fresh install or `--force` re-auth.
+
+**Cause:** When pasting into the hidden `read -s` prompt, some terminals inject ANSI
+escape sequences (e.g. `ESC[1;2C`, a cursor-forward code) before the pasted text.
+This corrupts the saved token: `<ESC>[1;2Cghu_...` instead of `ghu_...`.
+
+**Diagnosis:**
+```bash
+xxd ~/.config/copilot-api/token | head -1
+# Corrupt:  1b5b 313b 3243 6768 755f ...   ← starts with 1b (ESC)
+# Clean:    6768 755f ...                   ← starts with 67 68 = "gh"
+```
+
+**Fix:** `install.sh` now sanitises the token automatically (sed strips ESC sequences,
+tr removes remaining non-printable bytes). If you hit this on an older install:
+```bash
+cp ~/.local/share/copilot-api/github_token ~/.config/copilot-api/token
+chmod 600 ~/.config/copilot-api/token
+./install.sh --force   # re-enter token when prompted (will be clean this time)
+```
+
+**Key design note:** `install.sh` also warns if the saved token doesn't start with
+`ghu_` — the expected prefix for `copilot-api auth` tokens.
 
 ## Claude Code Integration
 
